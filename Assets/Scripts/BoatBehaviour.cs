@@ -29,33 +29,40 @@ public class BoatBehaviour : MonoBehaviour
     private List<Transform>.Enumerator waypoints;
     private Rigidbody rigidBody;
 
+    Quaternion lastRotation;
+
+    float timeSinceLastWaypoint = 0;
+
     private void Start()
     {
         rigidBody = GetComponent<Rigidbody>();
 
         waypoints = Waypoints.GetEnumerator();
-        UpdateVelocity();
+
+        lastRotation = BoatModel.rotation;
     }
 
     private void FixedUpdate()
     {
-        if (waypoints.Current != null && // treats edge case where there are no waypoints
+        if (waypoints.Current == null || // treats edge case where there are no waypoints
             (waypoints.Current.position - transform.position).sqrMagnitude <= SqrError)
         {
-            UpdateVelocity();
+            if (waypoints.MoveNext())
+            {
+                lastRotation = BoatModel.rotation;
+                timeSinceLastWaypoint = Time.time;
+            }
+            else
+            {
+                rigidBody.velocity = Vector3.zero;
+                return;
+            }
         }
-    }
 
-    private void UpdateVelocity()
-    {
-        if (waypoints.MoveNext())
-        {
-            rigidBody.velocity = (waypoints.Current.position - transform.position).normalized * Speed;
-            BoatModel.LookAt(waypoints.Current.position);
-        }
-        else
-        {
-            rigidBody.velocity = Vector3.zero;
-        }
+        BoatModel.rotation = Quaternion.Lerp(lastRotation, 
+            Quaternion.LookRotation(waypoints.Current.transform.position - transform.position), 
+            (Time.time - timeSinceLastWaypoint) * Speed * 0.75f);
+
+        rigidBody.velocity = BoatModel.forward * Speed;
     }
 }
