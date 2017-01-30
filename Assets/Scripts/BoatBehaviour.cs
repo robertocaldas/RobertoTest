@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Behaviour responsible for moving the boat through a series
-/// of waypoints.
+/// of waypoints, adjusting its position and rotation accordingly.
 /// </summary>
 public class BoatBehaviour : MonoBehaviour
 {
@@ -18,6 +18,8 @@ public class BoatBehaviour : MonoBehaviour
     public float Speed = 1;
 
     public List<Transform> Waypoints;
+
+    public Transform BoatModel;
 
     /// <summary>
     /// Squared error used in distance to target calculation.
@@ -49,6 +51,7 @@ public class BoatBehaviour : MonoBehaviour
         if (waypoints.MoveNext())
         {
             rigidBody.velocity = (waypoints.Current.position - transform.position).normalized * Speed;
+            BoatModel.LookAt(waypoints.Current.position);
         }
         else
         {
